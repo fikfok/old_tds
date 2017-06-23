@@ -17,7 +17,7 @@ class main(TemplateView):
     es_data = {}
     # context = {}
     json_response = {}
-
+    test = 5
 
     def post(self, request, **kwargs):
         file_name = str(uuid.uuid4())
