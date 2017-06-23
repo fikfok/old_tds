@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Table Data Service</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/cerulean/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.15/datatables.min.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.15/datatables.min.js"></script>
+</head>
+
+<body>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Table Data Service</a>
+            </div>
+
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+    <div class="container-fluid">
+        <div class="col-sm-3">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Uploaded files</h3>
+                </div>
+                <div class="panel-body">
+                    <form action="{% url 'main' %}" id="upload-files-form" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <p><input type="file" name="files-list" id="files-list"></p>
+                        <input type="submit" value="Upload" name="submit-upload-files" id="submit-upload-files" style="display: none;"/>
+                    </form>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>Type</th>
+                                <th>Size</th>
+                            </tr>
+                        </thead>
+                        <tbody id="files-list-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-9">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">File Content</h3>
+                </div>
+                <div class="panel-body">
+                    <table id="file-content-table" class="display" cellspacing="0" width="100%">
+                        <tbody id="table-content">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+    <script src="{% static "js/main.js" %}"></script>
+    <script src="{% static "js/table-init.js" %}"></script>
+</html>
