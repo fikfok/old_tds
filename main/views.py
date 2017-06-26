@@ -24,7 +24,7 @@ class main(TemplateView):
         if 'submit-upload-files' in request.POST and request.FILES['file'].name.split('.')[-1] == 'csv':
             form = DocumentForm(request.POST, request.FILES)
             handle_uploaded_file(request.FILES['file'], new_file_name = file_name)
-            time.sleep(3)
+            time.sleep(0.9)
             es_data = {'data': retrieve_es_data(index_name = file_name)}
             context['form'] = form
             context['res_list'] = self.res_list
@@ -76,3 +76,8 @@ def retrieve_es_data(index_name):
         result.append(list(hit['_source'].values()))
     return result
 
+
+
+
+class test(TemplateView):
+    template_name = 'test.html'
