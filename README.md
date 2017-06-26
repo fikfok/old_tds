@@ -18,4 +18,4 @@ def all_docs():
 ```
 
 - install Miniconda (https://conda.io/miniconda.html)
-- install pandas
+- conda install pandas
