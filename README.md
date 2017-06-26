@@ -14,6 +14,7 @@ def all_docs():
         with open(filename, 'r') if filename != '-' else sys.stdin as doc_file:
             # delimited file should include the field names as the first row
 #            fieldnames = doc_file.next().strip().split(delimiter)
+            fieldnames = doc_file.readline().strip().split(delimiter)
 ```
 
 - install Miniconda (https://conda.io/miniconda.html)
