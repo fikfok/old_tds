@@ -17,5 +17,5 @@ def all_docs():
             fieldnames = doc_file.readline().strip().split(delimiter)
 ```
 
-- install Miniconda (https://conda.io/miniconda.html)
+- Install Miniconda (https://conda.io/miniconda.html)
 - conda install pandas
