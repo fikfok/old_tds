@@ -8,6 +8,8 @@ import shlex
 from elasticsearch import Elasticsearch
 import time
 from django.http import JsonResponse
+import pandas as pd
+
 
 class main(TemplateView):
     template_name = 'main.html'
@@ -62,8 +64,17 @@ def handle_uploaded_file(f, new_file_name):
     virtual_env = 'my_env'
     index_name = new_file_name
     doc_type = new_file_name
-    command = shlex.split('/bin/bash -c "source ' + hm + virtual_env + '/bin/activate && csv2es --index-name ' + index_name + ' --doc-type ' + doc_type + ' --import-file ' + absolut_path + ' --tab"')
-    subprocess.call(command)
+    # command = shlex.split('/bin/bash -c "source ' + hm + virtual_env + '/bin/activate && csv2es --index-name ' + index_name + ' --doc-type ' + doc_type + ' --import-file ' + absolut_path + ' --tab"')
+    # subprocess.call(command)
+    data = {}
+    es = Elasticsearch()
+    df = pd.read_table(absolut_path, header = None)
+    for row in df.itertuples():
+        for col, val in enumerate(row):
+            data['row'] = str(row.Index)
+            data['col'] = str(col)
+            data['value'] = str(val)
+            es.index(index = index_name, doc_type = index_name, body = data)
     return
 
 def retrieve_es_data(index_name):
