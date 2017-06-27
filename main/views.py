@@ -60,22 +60,36 @@ def handle_uploaded_file(f, new_file_name):
         for line in fl:
             res_list.append(line)
 
-    hm = os.environ['HOME'] + '/'
-    virtual_env = 'my_env'
-    index_name = new_file_name
-    doc_type = new_file_name
+    # hm = os.environ['HOME'] + '/'
+    # virtual_env = 'my_env'
+    # index_name = new_file_name
+    # doc_type = new_file_name
     # command = shlex.split('/bin/bash -c "source ' + hm + virtual_env + '/bin/activate && csv2es --index-name ' + index_name + ' --doc-type ' + doc_type + ' --import-file ' + absolut_path + ' --tab"')
     # subprocess.call(command)
-    data = {}
+    put_data_in_es(i_name = new_file_name, d_type = new_file_name, file_path = absolut_path)
+    return
+
+def put_data_in_es(i_name, d_type, file_path):
     es = Elasticsearch()
-    df = pd.read_table(absolut_path, header = None)
+    mapping = \
+        {
+            "properties": {
+                "row": {"type": "long"},
+                "col": {"type": "long"},
+                "orig_value": {"type": "text", "fields": {"raw_value": {"type": "keyword"}}}
+            }
+        }
+    es.indices.create(index = i_name)
+    es.indices.put_mapping(index = i_name, doc_type = d_type, body = mapping)
+
+    data = {}
+    df = pd.read_table(file_path, header = None)
     for row in df.itertuples():
         for col, val in enumerate(row):
-            data['row'] = str(row.Index)
-            data['col'] = str(col)
-            data['value'] = str(val)
-            es.index(index = index_name, doc_type = index_name, body = data)
-    return
+            data['row'] = int(row.Index)
+            data['col'] = int(col)
+            data['orig_value'] = str(val)
+            es.index(index = i_name, doc_type = d_type, body = data)
 
 def retrieve_es_data(index_name):
     es = Elasticsearch()
@@ -87,8 +101,8 @@ def retrieve_es_data(index_name):
         result.append(list(hit['_source'].values()))
     return result
 
-
-
-
 class test(TemplateView):
     template_name = 'test.html'
+
+
+
