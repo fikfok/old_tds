@@ -93,6 +93,24 @@ def put_data_in_es(i_name, d_type, file_path):
 
 def retrieve_es_data(index_name):
     es = Elasticsearch()
+
+    query_count_columns = \
+        {
+            "size": 0,
+            "aggs": {
+                "columns_count": {
+                    "filter": {"term": {"row": 0}},
+                    "aggs": {
+                        "count": {"value_count": {"field": "col"}}
+                    }
+                }
+            }
+        }
+    es_search_result = es.search(index = '6372ce74-9ca5-4c42-9100-5cf1a0e0e0ec',
+                                 doc_type = '6372ce74-9ca5-4c42-9100-5cf1a0e0e0ec', body = query_count_columns)
+    columns_count = int(es_search_result['aggregations']['columns_count']['doc_count'])
+
+
     es_search_result = es.search(index = index_name, body = {"query": {"match_all": {}}, "size": 100})
     result = []
     result.append(list(es_search_result['hits']['hits'][0]['_source'].keys()))
