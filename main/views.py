@@ -83,13 +83,26 @@ def put_data_in_es(i_name, d_type, file_path):
     es.indices.put_mapping(index = i_name, doc_type = d_type, body = mapping)
 
     data = {}
-    df = pd.read_table(file_path, header = None)
-    for row in df.itertuples():
-        for col, val in enumerate(row):
-            data['row'] = int(row.Index)
-            data['col'] = int(col)
-            data['orig_value'] = str(val)
+    # df = pd.read_table(file_path, header = None)
+    # for row in df.itertuples():
+    #     for col, val in enumerate(row):
+    #         data['row'] = int(row.Index)
+    #         data['col'] = int(col)
+    #         data['orig_value'] = str(val)
+    #         es.index(index = i_name, doc_type = d_type, body = data)
+
+    chunksize = 1000
+    myfile = pd.read_table(file_path, header = None, iterator = True, chunksize = chunksize)
+    for i, df in enumerate(myfile):
+        records = df.to_dict()
+        list_records = [records[it] for it in records]
+        for key, v in enumerate(list_records):
+            data['row'] = int(list(v.keys())[0])
+            data['col'] = int(key)
+            data['orig_value'] = str(v[list(v.keys())[0]])
+            print(data)
             es.index(index = i_name, doc_type = d_type, body = data)
+
 
 def retrieve_es_data(index_name):
     es = Elasticsearch()
@@ -106,18 +119,31 @@ def retrieve_es_data(index_name):
                 }
             }
         }
-    es_search_result = es.search(index = '6372ce74-9ca5-4c42-9100-5cf1a0e0e0ec',
-                                 doc_type = '6372ce74-9ca5-4c42-9100-5cf1a0e0e0ec', body = query_count_columns)
+    es_search_result = es.search(index = index_name,
+                                 doc_type = index_name, body = query_count_columns)
     columns_count = int(es_search_result['aggregations']['columns_count']['doc_count'])
+    rows_to_select = 100
+    query_size = rows_to_select * columns_count
+    query_select_top_N = \
+                    {
+                        "size": str(query_size),
+                        "query": {
+                            "range": {
+                                "row": {"lt": str(rows_to_select)}
+                            }
+                        }
+                    }
 
+    es_search_result = es.search(
+                                index = index_name,
+                                doc_type = index_name,
+                                body = query_select_top_N,
+                                filter_path = ['hits.hits._source'])
+    df = pd.DataFrame()
+    for item in es_search_result['hits']['hits']:
+        df.loc[item['_source']['row'], item['_source']['col']] = item['_source']['orig_value']
+    return df.set_index([0]).values.tolist()
 
-    es_search_result = es.search(index = index_name, body = {"query": {"match_all": {}}, "size": 100})
-    result = []
-    result.append(list(es_search_result['hits']['hits'][0]['_source'].keys()))
-
-    for hit in es_search_result['hits']['hits']:
-        result.append(list(hit['_source'].values()))
-    return result
 
 class test(TemplateView):
     template_name = 'test.html'
