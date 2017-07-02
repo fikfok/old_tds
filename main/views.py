@@ -3,9 +3,9 @@ from main.forms import DocumentForm
 import uuid
 import os
 from django.conf import settings
-import subprocess
-import shlex
 from elasticsearch import Elasticsearch
+from main.upload_file_into_es import upload_file_into_es
+
 import time
 from django.http import JsonResponse
 import pandas as pd
@@ -81,28 +81,7 @@ def put_data_in_es(i_name, d_type, file_path):
         }
     es.indices.create(index = i_name)
     es.indices.put_mapping(index = i_name, doc_type = d_type, body = mapping)
-
-    data = {}
-    # df = pd.read_table(file_path, header = None)
-    # for row in df.itertuples():
-    #     for col, val in enumerate(row):
-    #         data['row'] = int(row.Index)
-    #         data['col'] = int(col)
-    #         data['orig_value'] = str(val)
-    #         es.index(index = i_name, doc_type = d_type, body = data)
-
-    chunksize = 1000
-    myfile = pd.read_table(file_path, header = None, iterator = True, chunksize = chunksize)
-    for i, df in enumerate(myfile):
-        records = df.to_dict()
-        list_records = [records[it] for it in records]
-        for key, v in enumerate(list_records):
-            data['row'] = int(list(v.keys())[0])
-            data['col'] = int(key)
-            data['orig_value'] = str(v[list(v.keys())[0]])
-            print(data)
-            es.index(index = i_name, doc_type = d_type, body = data)
-
+    upload_file_into_es(es = es, file_path = file_path, index_name = i_name, doc_type = d_type)
 
 def retrieve_es_data(index_name):
     es = Elasticsearch()
