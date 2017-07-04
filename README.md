@@ -6,3 +6,5 @@
 - pip install pyelasticsearch (>= 1.4)
 - Install Miniconda (https://conda.io/docs/install/quick.html)
 - conda install pandas
+- pip install pyelasticsearch
+- conda install joblib
