@@ -4,8 +4,6 @@ from joblib import Parallel, delayed
 from pyelasticsearch import ElasticSearch
 from pyelasticsearch import bulk_chunks
 from time import time
-# from joblib import Parallel, delayed
-# from pyelasticsearch import ElasticSearch, bulk_chunks
 
 
 thread_local = local()
@@ -20,7 +18,7 @@ def documents_from_file(es, filename, delimiter):
     :return: generator returning document-indexing operations
     """
     def all_docs():
-        chunksize = 1
+        chunksize = 1000
         reader = pd.read_table(filename, header = None, iterator = True, chunksize = chunksize)
         for i, df in enumerate(reader):
             records = df.to_dict()
@@ -65,8 +63,9 @@ def perform_bulk_index(host, index_name, doc_type, doc_fetch, docs_per_chunk, by
                                  docs_per_chunk=docs_per_chunk,
                                  bytes_per_chunk=bytes_per_chunk))
 
-def upload_file_into_es(es, file_path, index_name, doc_type, delimeter='\t', host = 'http://localhost:9200'):
+def upload_file_into_es(file_path, index_name, doc_type, delimeter='\t', host = 'http://localhost:9200'):
     t0 = time()
+    es = ElasticSearch()
     documents = documents_from_file(es, file_path, delimiter = delimeter)
-    perform_bulk_index(host = host, index_name = index_name, doc_type = doc_type, doc_fetch = documents, docs_per_chunk = 1, bytes_per_chunk = 10000, parallel = 1)
-    print('Done in %s', (time()-t0))
+    perform_bulk_index(host = host, index_name = index_name, doc_type = doc_type, doc_fetch = documents, docs_per_chunk = 1000, bytes_per_chunk = 10000, parallel = 1)
+    print('Done in %s sec.' % (time()-t0))

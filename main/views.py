@@ -60,12 +60,6 @@ def handle_uploaded_file(f, new_file_name):
         for line in fl:
             res_list.append(line)
 
-    # hm = os.environ['HOME'] + '/'
-    # virtual_env = 'my_env'
-    # index_name = new_file_name
-    # doc_type = new_file_name
-    # command = shlex.split('/bin/bash -c "source ' + hm + virtual_env + '/bin/activate && csv2es --index-name ' + index_name + ' --doc-type ' + doc_type + ' --import-file ' + absolut_path + ' --tab"')
-    # subprocess.call(command)
     put_data_in_es(i_name = new_file_name, d_type = new_file_name, file_path = absolut_path)
     return
 
@@ -81,7 +75,7 @@ def put_data_in_es(i_name, d_type, file_path):
         }
     es.indices.create(index = i_name)
     es.indices.put_mapping(index = i_name, doc_type = d_type, body = mapping)
-    upload_file_into_es(es = es, file_path = file_path, index_name = i_name, doc_type = d_type)
+    upload_file_into_es(file_path = file_path, index_name = i_name, doc_type = d_type)
 
 def retrieve_es_data(index_name):
     es = Elasticsearch()
@@ -121,7 +115,7 @@ def retrieve_es_data(index_name):
     df = pd.DataFrame()
     for item in es_search_result['hits']['hits']:
         df.loc[item['_source']['row'], item['_source']['col']] = item['_source']['orig_value']
-    return df.set_index([0]).values.tolist()
+    return df.sort_index(axis = 0).values.tolist()
 
 
 class test(TemplateView):
