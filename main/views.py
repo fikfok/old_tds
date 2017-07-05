@@ -115,11 +115,7 @@ def retrieve_es_data(index_name):
     df = pd.DataFrame()
     for item in es_search_result['hits']['hits']:
         df.loc[item['_source']['row'], item['_source']['col']] = item['_source']['orig_value']
-    return df.sort_index(axis = 0).values.tolist()
-
-
-class test(TemplateView):
-    template_name = 'test.html'
+    return df.sort_index(axis = 0).sort_index(axis = 1).values.tolist()
 
 
 
