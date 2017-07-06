@@ -1,12 +1,11 @@
 from django.views.generic.base import TemplateView
 from main.forms import DocumentForm
-import uuid
 import os
 from django.conf import settings
 from elasticsearch import Elasticsearch
 from main.upload_file_into_es import upload_file_into_es
-
 import time
+from datetime import datetime
 from django.http import JsonResponse
 import pandas as pd
 
@@ -17,11 +16,10 @@ class main(TemplateView):
     res_list = []
     file_type = True
     es_data = {}
-    # context = {}
     json_response = {}
 
     def post(self, request, **kwargs):
-        file_name = str(uuid.uuid4())
+        file_name = 'tds-' + str(datetime.now()).replace(' ', '-').replace(':', '-').replace('.', '-')
         context = super(main, self).get_context_data(**kwargs)
         if 'submit-upload-files' in request.POST and request.FILES['file'].name.split('.')[-1] == 'csv':
             form = DocumentForm(request.POST, request.FILES)
@@ -67,14 +65,17 @@ def put_data_in_es(i_name, d_type, file_path):
     es = Elasticsearch()
     mapping = \
         {
-            "properties": {
-                "row": {"type": "long"},
-                "col": {"type": "long"},
-                "orig_value": {"type": "text", "fields": {"raw_value": {"type": "keyword"}}}
+            "mapping": {
+                "index_mapping": {
+                    "properties": {
+                        "row": {"type": "long"},
+                        "col": {"type": "long"},
+                        "orig_value": {"type": "text", "fields": {"raw_value": {"type": "keyword"}}}
+                    }
+                }
             }
         }
-    es.indices.create(index = i_name)
-    es.indices.put_mapping(index = i_name, doc_type = d_type, body = mapping)
+    es.indices.create(index = i_name, body = mapping)
     upload_file_into_es(file_path = file_path, index_name = i_name, doc_type = d_type)
 
 def retrieve_es_data(index_name):
