@@ -24,7 +24,7 @@ class main(TemplateView):
         if 'submit-upload-files' in request.POST and request.FILES['file'].name.split('.')[-1] == 'csv':
             form = DocumentForm(request.POST, request.FILES)
             handle_uploaded_file(request.FILES['file'], new_file_name = file_name)
-            time.sleep(0.9)
+            time.sleep(1.5)
             es_data = {'data': retrieve_es_data(index_name = file_name)}
             context['form'] = form
             context['res_list'] = self.res_list
@@ -65,18 +65,15 @@ def put_data_in_es(i_name, d_type, file_path):
     es = Elasticsearch()
     mapping = \
         {
-            "mapping": {
-                "index_mapping": {
-                    "properties": {
-                        "row": {"type": "long"},
-                        "col": {"type": "long"},
-                        "orig_value": {"type": "text", "fields": {"raw_value": {"type": "keyword"}}}
-                    }
-                }
+            "properties": {
+                "row": {"type": "long"},
+                "col": {"type": "long"},
+                "orig_value": {"type": "text", "fields": {"raw_value": {"type": "keyword"}}}
             }
         }
-    es.indices.create(index = i_name, body = mapping)
-    upload_file_into_es(file_path = file_path, index_name = i_name, doc_type = d_type)
+    es.indices.create(index = i_name)
+    es.indices.put_mapping(index = i_name, doc_type = i_name, body = mapping)
+    upload_file_into_es(file_path = file_path, index_name = i_name)
 
 def retrieve_es_data(index_name):
     es = Elasticsearch()
@@ -114,6 +111,7 @@ def retrieve_es_data(index_name):
                                 body = query_select_top_N,
                                 filter_path = ['hits.hits._source'])
     df = pd.DataFrame()
+
     for item in es_search_result['hits']['hits']:
         df.loc[item['_source']['row'], item['_source']['col']] = item['_source']['orig_value']
     return df.sort_index(axis = 0).sort_index(axis = 1).values.tolist()
