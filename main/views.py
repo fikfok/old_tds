@@ -9,7 +9,6 @@ from datetime import datetime
 from django.http import JsonResponse
 import pandas as pd
 
-
 class main(TemplateView):
     template_name = 'main.html'
 

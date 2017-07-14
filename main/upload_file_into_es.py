@@ -20,7 +20,7 @@ def documents_from_file(file_name, index_name, delimiter = '\t'):
     :return: generator returning document-indexing operations
     """
     def all_docs():
-        chunksize = 10000
+        chunksize = 50000
         reader = pd.read_table(file_name, header = None, iterator = True, chunksize = chunksize)
         for i, df in enumerate(reader):
             records = df.to_dict()
