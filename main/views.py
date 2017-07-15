@@ -8,6 +8,8 @@ import time
 from datetime import datetime
 from django.http import JsonResponse
 import pandas as pd
+from main.tasks import just_print, TestPeriodic
+
 
 class main(TemplateView):
     template_name = 'main.html'
@@ -30,6 +32,11 @@ class main(TemplateView):
             context['file_type'] = self.file_type
             context['es_data'] = es_data
             context['file_size'] = request.POST['file_size']
+
+            just_print.delay()
+            ap = TestPeriodic(per=7)
+            ap.run()
+
         elif 'submit-upload-files' in request.POST and request.FILES['file'].name.split('.')[-1] != 'csv':
             self.file_type = False
             context['file_type'] = self.file_type

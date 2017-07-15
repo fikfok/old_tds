@@ -138,12 +138,12 @@ CELERY_TIMEZONE = 'Asia/Shanghai'
 CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
 CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
 
-CELERYBEAT_SCHEDULE = {
-    'example-task': {
-        'task': 'main.tasks.another_print',
-        'schedule': 2,  # в секундах, или timedelta(seconds=10)
-    },
-}
+# CELERYBEAT_SCHEDULE = {
+#     'example-task': {
+#         'task': 'main.tasks.another_print',
+#         'schedule': 2,  # в секундах, или timedelta(seconds=10)
+#     },
+# }
 
 import djcelery
 djcelery.setup_loader()
