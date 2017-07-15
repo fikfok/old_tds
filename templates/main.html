@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Table Data Service</title>
     <meta charset="utf-8">
@@ -25,49 +26,59 @@
             </div>
         </div>
     </nav>
-
-
     <div class="container-fluid">
-        <div class="col-sm-3">
-            <div class="panel panel-primary">
+        <div class="col-md-12">
+            <div class="panel with-nav-tabs panel-default">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Uploaded files</h3>
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#tab1default" data-toggle="tab">Files</a></li>
+                        <li><a href="#tab2default" data-toggle="tab">Filters</a></li>
+                        <li><a href="#tab3default" data-toggle="tab">Output</a></li>
+
+                    </ul>
                 </div>
                 <div class="panel-body">
-                    <form action="{% url 'main' %}" id="upload-files-form" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <p><input type="file" name="files-list" id="files-list"></p>
-                        <input type="submit" value="Upload" name="submit-upload-files" id="submit-upload-files" style="display: none;"/>
-                    </form>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Filename</th>
-                                <th>Size</th>
-                                <th>Upload status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="files-list-table-body">
-                        </tbody>
-                    </table>
+                    <div class="tab-content">
+                        <div class="tab-pane  active" id="tab1default">
+                            <div class="panel-body">
+                                <form action="{% url 'main' %}" id="upload-files-form" method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <label class="btn btn-default btn-file">
+                                    <input type="file" name="files-list" id="files-list">
+                                        </label>
+
+                                    <input type="submit" value="Upload" name="submit-upload-files" id="submit-upload-files" style="display: none;" />
+                                </form>
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Filename</th>
+                                            <th>Size</th>
+                                            <th>Upload status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="files-list-table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                        <div class="tab-pane " id="tab2default">
+                            <div class="panel-body">
+                                <table id="file-content-table" class="table table-bordered" cellspacing="0" width="100%">
+                                    <tbody id="table-content">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane " id="tab3default">Output Content</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-sm-9">
-            <div class="panel panel-primary">
-                <div class="panel-heading">
-                    <h3 class="panel-title">File Content</h3>
-                </div>
-                <div class="panel-body">
-                    <table id="file-content-table" class="table table-bordered" cellspacing="0" width="100%">
-                        <tbody id="table-content">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
     </div>
 </body>
-    <script src="/static/js/main.js"></script>
+<script src="/static/js/main.js"></script>
+
 </html>
