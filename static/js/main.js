@@ -25,10 +25,9 @@ $(function() {
                     if (percentComplete === 100) {
                         $('#upload-progress-bar').attr('value', '100');
                         console.log('Done!');
-                }
-              }
-            }, false);
-
+                    }
+                  }
+                }, false);
             return xhr;
             },
 
@@ -37,15 +36,42 @@ $(function() {
             data : data,
             processData: false,
             contentType: false,
-            success : function(json) {
+            success : function(json){
                 console.log("success");
-                $.each(json['response_es_data']['data'], function(key_in_json_table, row_in_json_table){
-                    var row = $("<tr />");
-                    $("#table-content").append(row);
-                    $.each(row_in_json_table, function(key_in_json_row, cell_in_json_table){
-                        row.append($("<td>" + cell_in_json_table + "</td>"));
-                    });
-                })
+                console.log(json['task_id']);
+                // $.each(json['response_es_data']['data'], function(key_in_json_table, row_in_json_table){
+                //     var row = $("<tr />");
+                //     $("#table-content").append(row);
+                //     $.each(row_in_json_table, function(key_in_json_row, cell_in_json_table){
+                //         row.append($("<td>" + cell_in_json_table + "</td>"));
+                //     });
+                // })
+                // alert()
+
+                var i = 0;
+                var intervalID = setInterval(function testFunc(){
+                            i++;
+                            console.log(json['task_id']);
+                           $.ajax({
+                                url : "task_status/" + json['task_id'],
+                                type : "POST",
+                                data : data,
+                                processData: false,
+                                contentType: false,
+                                success : function(json){
+                                    console.log(json['task_status'])
+                                        },
+                                error : function() {
+                                    console.log("error")
+                                }
+                            });
+
+                            if (i >= 15) {
+                                clearInterval(intervalID);
+                            }
+                        },
+                    200);
+
             },
             error : function(xhr,errmsg,err) {
                 console.log("error")
