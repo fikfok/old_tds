@@ -4,7 +4,7 @@ import os
 from django.conf import settings
 from elasticsearch import Elasticsearch
 from main.upload_file_into_es import upload_file_into_es
-import time
+from main.models import UploadedFiles
 from datetime import datetime
 from django.http import JsonResponse
 import pandas as pd
@@ -30,14 +30,29 @@ class main(TemplateView):
         context = super(main, self).get_context_data(**kwargs)
         if 'submit-upload-files' in request.POST and request.FILES['file'].name.split('.')[-1] == 'csv':
             form = DocumentForm(request.POST, request.FILES)
-            absolut_file_path = uploaded_file(request.FILES['file'], new_file_name = file_name)
+            absolut_file_path, num_lines = uploaded_file(request.FILES['file'], new_file_name = file_name)
             context['form'] = form
             context['res_list'] = self.res_list
             context['file_type'] = self.file_type
             context['file_size'] = request.POST['file_size']
 
-            task_putting_file_into_es = tasks.put_data_in_es.delay(index_name = file_name, doc_type = file_name, file_path = absolut_file_path)
-            self.json_response['task_id'] = task_putting_file_into_es.task_id
+            user_file = UploadedFiles(unique_file_name = file_name,
+                                      absolut_file_path = absolut_file_path,
+                                      original_file_name = request.FILES['file'].name,
+                                      upload_into_es_file_size = request.POST['file_size'],
+                                      upload_into_es_rows_count = num_lines)
+            user_file.save()
+
+            put_file_into_es = tasks.put_data_in_es.delay(index_name = file_name,
+                                                                   doc_type = file_name,
+                                                                   file_path = absolut_file_path,
+                                                                   read_chunk_size = 50000,
+                                                                   parallel_jobs_count = 12,
+                                                                   index_chunk_size = 50000)
+            self.json_response['task_id'] = put_file_into_es.task_id
+
+            user_file.upload_into_es_task_id = put_file_into_es.task_id
+            user_file.save()
 
         elif 'submit-upload-files' in request.POST and request.FILES['file'].name.split('.')[-1] != 'csv':
             self.file_type = False
@@ -61,7 +76,13 @@ def uploaded_file(f, new_file_name):
             res_list.append(line)
 
     # put_data_in_es(i_name = new_file_name, d_type = new_file_name, file_path = absolut_path)
-    return absolut_path
+
+    num_lines = 0
+    if ext[1:] == 'csv':
+        with open(absolut_path) as fl:
+            num_lines = sum(1 for line in fl)
+
+    return absolut_path, num_lines
 
 def put_data_in_es(i_name, d_type, file_path):
     es = Elasticsearch()
