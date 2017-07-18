@@ -1,6 +1,6 @@
 $(function() {
     $('#files-list').on('change', function () {
-        $('#files-list-table-body').append('<tr><td>' + $("#files-list")[0].files[0].name + '</td><td>' + $("#files-list")[0].files[0].size + '</td><td><progress id="upload-progress-bar" max="100" value="0" style="width: 70px;"></progress></td></tr>');
+        $('#files-list-table-body').append('<tr><td>' + $("#files-list")[0].files[0].name + '</td><td>' + $("#files-list")[0].files[0].size + '</td><td><progress id="upload-progress-bar" max="100" value="0" style="width: 70px;"></progress></td><td><progress id="indexing-progress-bar" max="100" value="0" style="width: 70px;"></progress></td></tr>');
         $('#submit-upload-files').click();
     });
 
@@ -38,7 +38,6 @@ $(function() {
             contentType: false,
             success : function(json){
                 console.log("success");
-                console.log(json['task_id']);
                 // $.each(json['response_es_data']['data'], function(key_in_json_table, row_in_json_table){
                 //     var row = $("<tr />");
                 //     $("#table-content").append(row);
@@ -48,10 +47,7 @@ $(function() {
                 // })
                 // alert()
 
-                var i = 0;
                 var intervalID = setInterval(function testFunc(){
-                            i++;
-                            console.log(json['task_id']);
                            $.ajax({
                                 url : "task_status/" + json['task_id'],
                                 type : "POST",
@@ -59,18 +55,24 @@ $(function() {
                                 processData: false,
                                 contentType: false,
                                 success : function(json){
-                                    console.log(json['task_status'])
-                                        },
+                                        console.log(json['indexing_status'])
+                                        if (parseInt(json['indexing_status']) >= 0) {
+                                            $('#indexing-progress-bar').attr('value', parseInt(json['indexing_status']));
+                                        };
+                                        if (parseInt(json['indexing_status']) >= 100) {
+                                            clearInterval(intervalID);
+                                        }
+                                    },
                                 error : function() {
                                     console.log("error")
                                 }
                             });
 
-                            if (i >= 15) {
-                                clearInterval(intervalID);
-                            }
+                            // if (parseInt(json['indexing_status']) >= 100) {
+                            //     clearInterval(intervalID);
+                            // }
                         },
-                    200);
+                    100);
 
             },
             error : function(xhr,errmsg,err) {
