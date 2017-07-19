@@ -38,15 +38,6 @@ $(function() {
             contentType: false,
             success : function(json){
                 console.log("success");
-                // $.each(json['response_es_data']['data'], function(key_in_json_table, row_in_json_table){
-                //     var row = $("<tr />");
-                //     $("#table-content").append(row);
-                //     $.each(row_in_json_table, function(key_in_json_row, cell_in_json_table){
-                //         row.append($("<td>" + cell_in_json_table + "</td>"));
-                //     });
-                // })
-                // alert()
-
                 var intervalID = setInterval(function testFunc(){
                            $.ajax({
                                 url : "task_status/" + json['task_id'],
@@ -55,7 +46,6 @@ $(function() {
                                 processData: false,
                                 contentType: false,
                                 success : function(json){
-                                        console.log(json['indexing_status'])
                                         if (parseInt(json['indexing_status']) >= 0 && $('#indexing-progress-bar').attr('value') < parseInt(json['indexing_status'])) {
                                             $('#indexing-progress-bar').attr('value', parseInt(json['indexing_status']));
                                         };
@@ -67,12 +57,16 @@ $(function() {
                                     console.log("error")
                                 }
                             });
-
-                            // if (parseInt(json['indexing_status']) >= 100) {
-                            //     clearInterval(intervalID);
-                            // }
                         },
-                    100);
+                    300);
+
+                $.each(json['response_es_data']['data'], function(key_in_json_table, row_in_json_table){
+                    var row = $("<tr />");
+                    $("#table-content").append(row);
+                    $.each(row_in_json_table, function(key_in_json_row, cell_in_json_table){
+                        row.append($("<td>" + cell_in_json_table + "</td>"));
+                    });
+                })
 
             },
             error : function(xhr,errmsg,err) {
