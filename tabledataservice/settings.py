@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'main',
+    'djcelery',
 ]
 
 MIDDLEWARE = [
@@ -122,3 +123,28 @@ STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 STATICFILES_DIRS = ('static', os.path.join(BASE_DIR, 'static'))
 MEDIA_URL = '/uploads/'
+
+# BROKER_HOST = "localhost"
+# BROKER_PORT = 5672
+# BROKER_USER = "admin"
+# BROKER_PASSWORD = "admin"
+# BROKER_VHOST = "myvhost"
+BROKER_URL = "amqp://admin:admin@localhost:5672/myvhost"
+#
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Shanghai'
+CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+
+# CELERYBEAT_SCHEDULE = {
+#     'example-task': {
+#         'task': 'main.tasks.another_print',
+#         'schedule': 2,  # в секундах, или timedelta(seconds=10)
+#     },
+# }
+
+import djcelery
+djcelery.setup_loader()
+

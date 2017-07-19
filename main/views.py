@@ -4,10 +4,56 @@ import os
 from django.conf import settings
 from elasticsearch import Elasticsearch
 from main.upload_file_into_es import upload_file_into_es
-import time
+from main.models import UploadedFiles
 from datetime import datetime
+from django.utils.timezone import now as django_now
 from django.http import JsonResponse
 import pandas as pd
+import main.tasks as tasks
+from celery.result import AsyncResult
+
+def task_status(request, task_id):
+    json_response = {}
+    json_response['task_status'] = AsyncResult(task_id).status
+
+    es = Elasticsearch()
+
+    query_search = \
+        {
+            "size": 0,
+            "aggs": {
+                "aggs": {
+                    "top_hits": {
+                        "size": 1,
+                        "_source": {
+                            "includes": ["col", "row"]
+                        },
+                        "sort": [
+                            {
+                                "row": {
+                                    "order": "desc"
+                                },
+                                "col": {
+                                    "order": "desc"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+    current_file = UploadedFiles.objects.get(upload_into_es_task_id = task_id)
+    count_docs = es.search(index = current_file.unique_file_name,
+                           doc_type = current_file.unique_file_name,
+                           body = query_search)
+    try:
+        rows_count = count_docs['aggregations']['aggs']['hits']['hits'][0]['_source']['row'] + 1
+        cols_count = count_docs['aggregations']['aggs']['hits']['hits'][0]['_source']['col'] + 1
+        json_response['indexing_status'] = ((rows_count - 1) * current_file.upload_into_es_cols_count + cols_count) / (current_file.upload_into_es_rows_count * current_file.upload_into_es_cols_count) * 100
+    except IndexError:
+        json_response['indexing_status'] = -1
+    return JsonResponse(json_response)
 
 
 class main(TemplateView):
@@ -22,28 +68,42 @@ class main(TemplateView):
         file_name = 'tds-' + str(datetime.now()).replace(' ', '-').replace(':', '-').replace('.', '-')
         context = super(main, self).get_context_data(**kwargs)
         if 'submit-upload-files' in request.POST and request.FILES['file'].name.split('.')[-1] == 'csv':
+            delimeter = '\t'
             form = DocumentForm(request.POST, request.FILES)
-            handle_uploaded_file(request.FILES['file'], new_file_name = file_name)
-            time.sleep(1.5)
-            es_data = {'data': retrieve_es_data(index_name = file_name)}
+            absolut_file_path, num_rows, num_cols = uploaded_file(request.FILES['file'], new_file_name = file_name, delimeter = delimeter)
             context['form'] = form
             context['res_list'] = self.res_list
             context['file_type'] = self.file_type
-            context['es_data'] = es_data
             context['file_size'] = request.POST['file_size']
+
+            user_file = UploadedFiles(unique_file_name = file_name,
+                                      absolut_file_path = absolut_file_path,
+                                      original_file_name = request.FILES['file'].name,
+                                      upload_into_es_file_size = request.POST['file_size'],
+                                      upload_into_es_rows_count = num_rows,
+                                      upload_into_es_cols_count = num_cols,
+                                      file_upload_date_time = django_now())
+            user_file.save()
+
+            put_file_into_es = tasks.put_data_in_es.delay(index_name = file_name,
+                                                           file_path = absolut_file_path,
+                                                           read_chunk_size = 50000,
+                                                           parallel_jobs_count = 12,
+                                                           index_chunk_size = 50000,
+                                                           delimeter = delimeter)
+
+            self.json_response['task_id'] = put_file_into_es.task_id
+
+            user_file.upload_into_es_task_id = put_file_into_es.task_id
+            user_file.save()
+
         elif 'submit-upload-files' in request.POST and request.FILES['file'].name.split('.')[-1] != 'csv':
             self.file_type = False
             context['file_type'] = self.file_type
-        if self.request.is_ajax():
-            self.json_response['response_file_name'] = request.POST['file_name']
-            self.json_response['response_file_type'] = request.FILES['file'].name.split('.')[-1]
-            self.json_response['response_file_size'] = request.POST['file_size']
-            self.json_response['response_es_data'] = es_data
-            return JsonResponse(self.json_response)
-        return super(main, self).render_to_response(context)
+        return JsonResponse(self.json_response)
 
 
-def handle_uploaded_file(f, new_file_name):
+def uploaded_file(f, new_file_name, delimeter):
     path = settings.MEDIA_ROOT + '/'
 
     ext = os.path.splitext(f.name)[-1].lower()
@@ -58,8 +118,16 @@ def handle_uploaded_file(f, new_file_name):
         for line in fl:
             res_list.append(line)
 
-    put_data_in_es(i_name = new_file_name, d_type = new_file_name, file_path = absolut_path)
-    return
+    # put_data_in_es(i_name = new_file_name, d_type = new_file_name, file_path = absolut_path)
+
+    num_rows = 0
+    num_cols = 0
+    if ext[1:] == 'csv':
+        with open(absolut_path) as fl:
+            num_cols = len(fl.readline().split(delimeter))
+            num_rows = sum(1 for line in fl) + 1
+
+    return absolut_path, num_rows, num_cols
 
 def put_data_in_es(i_name, d_type, file_path):
     es = Elasticsearch()

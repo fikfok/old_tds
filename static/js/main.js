@@ -1,6 +1,6 @@
 $(function() {
     $('#files-list').on('change', function () {
-        $('#files-list-table-body').append('<tr><td>' + $("#files-list")[0].files[0].name + '</td><td>' + $("#files-list")[0].files[0].size + '</td><td><progress id="upload-progress-bar" max="100" value="0" style="width: 70px;"></progress></td></tr>');
+        $('#files-list-table-body').append('<tr><td>' + $("#files-list")[0].files[0].name + '</td><td>' + $("#files-list")[0].files[0].size + '</td><td><progress id="upload-progress-bar" max="100" value="0" style="width: 70px;"></progress></td><td><progress id="indexing-progress-bar" max="100" value="0" style="width: 70px;"></progress></td></tr>');
         $('#submit-upload-files').click();
     });
 
@@ -25,10 +25,9 @@ $(function() {
                     if (percentComplete === 100) {
                         $('#upload-progress-bar').attr('value', '100');
                         console.log('Done!');
-                }
-              }
-            }, false);
-
+                    }
+                  }
+                }, false);
             return xhr;
             },
 
@@ -37,8 +36,30 @@ $(function() {
             data : data,
             processData: false,
             contentType: false,
-            success : function(json) {
+            success : function(json){
                 console.log("success");
+                var intervalID = setInterval(function testFunc(){
+                           $.ajax({
+                                url : "task_status/" + json['task_id'],
+                                type : "POST",
+                                data : data,
+                                processData: false,
+                                contentType: false,
+                                success : function(json){
+                                        if (parseInt(json['indexing_status']) >= 0 && $('#indexing-progress-bar').attr('value') < parseInt(json['indexing_status'])) {
+                                            $('#indexing-progress-bar').attr('value', parseInt(json['indexing_status']));
+                                        };
+                                        if (parseInt(json['indexing_status']) >= 100) {
+                                            clearInterval(intervalID);
+                                        }
+                                    },
+                                error : function() {
+                                    console.log("error")
+                                }
+                            });
+                        },
+                    300);
+
                 $.each(json['response_es_data']['data'], function(key_in_json_table, row_in_json_table){
                     var row = $("<tr />");
                     $("#table-content").append(row);
@@ -46,6 +67,7 @@ $(function() {
                         row.append($("<td>" + cell_in_json_table + "</td>"));
                     });
                 })
+
             },
             error : function(xhr,errmsg,err) {
                 console.log("error")
