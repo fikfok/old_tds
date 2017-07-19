@@ -30,51 +30,28 @@
         <div class="col-md-12">
             <div class="panel with-nav-tabs panel-default">
                 <div class="panel-heading">
-<<<<<<< HEAD
                     <ul class="nav nav-tabs">
                         <li class="active"><a href="#tab1default" data-toggle="tab">Files</a></li>
                         <li><a href="#tab2default" data-toggle="tab">Data</a></li>
                         <li><a href="#tab3default" data-toggle="tab">Filters</a></li>
                         <li><a href="#tab4default" data-toggle="tab">Output</a></li>
-=======
-                    <h3 class="panel-title">Uploaded files</h3>
-                </div>
-                <div class="panel-body">
-                    <form action="{% url 'main' %}" id="upload-files-form" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <p><input type="file" name="files-list" id="files-list"></p>
-                        <input type="submit" value="Upload" name="submit-upload-files" id="submit-upload-files" style="display: none;"/>
-                    </form>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Filename</th>
-                                <th>Size</th>
-                                <th>Upload status</th>
-                                <th>Processing status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="files-list-table-body">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
->>>>>>> origin/draft/celery-draft1-2
-
                     </ul>
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#>>>>>>> origin/draft/celery-draft1-2#}
+{#                    </ul>#}
                 </div>
+
                 <div class="panel-body">
                     <div class="tab-content">
                         <div class="tab-pane  active" id="tab1default">
+                            <h3 class="panel-title">Uploaded files</h3>
                             <div class="panel-body">
                                 <form action="{% url 'main' %}" id="upload-files-form" method="post" enctype="multipart/form-data">
                                     {% csrf_token %}
-                                    <label class="btn btn-default btn-file">
-                                    <input type="file" name="files-list" id="files-list">
-                                        </label>
-
-                                    <input type="submit" value="Upload" name="submit-upload-files" id="submit-upload-files" style="display: none;" />
+                                    <p><input type="file" name="files-list" id="files-list"></p>
+                                    <input type="submit" value="Upload" name="submit-upload-files" id="submit-upload-files" style="display: none;"/>
                                 </form>
                                 <table class="table">
                                     <thead>
@@ -82,12 +59,14 @@
                                             <th>Filename</th>
                                             <th>Size</th>
                                             <th>File upload status</th>
+                                            <th>Data processing status</th>
                                         </tr>
                                     </thead>
                                     <tbody id="files-list-table-body">
                                     </tbody>
                                 </table>
                             </div>
+
                         </div>
 
                         <div class="tab-pane" id="tab2default">
