@@ -38,36 +38,47 @@ $(function() {
             contentType: false,
             success : function(json){
                 console.log("success");
+                var index_name = json['index_name'];
                 var intervalID = setInterval(function testFunc(){
-                           $.ajax({
-                                url : "task_status/" + json['task_id'],
-                                type : "POST",
-                                data : data,
-                                processData: false,
-                                contentType: false,
-                                success : function(json){
-                                        if (parseInt(json['indexing_status']) >= 0 && $('#indexing-progress-bar').attr('value') < parseInt(json['indexing_status'])) {
-                                            $('#indexing-progress-bar').attr('value', parseInt(json['indexing_status']));
-                                        };
-                                        if (parseInt(json['indexing_status']) >= 100) {
-                                            clearInterval(intervalID);
-                                        }
-                                    },
-                                error : function() {
-                                    console.log("error")
-                                }
-                            });
-                        },
+                       $.ajax({
+                            url : "task_status/" + json['task_id'],
+                            type : "POST",
+                            data : data,
+                            processData: false,
+                            contentType: false,
+                            success : function(json){
+                                    if (parseInt(json['indexing_status']) >= 0 && $('#indexing-progress-bar').attr('value') < parseInt(json['indexing_status'])) {
+                                        $('#indexing-progress-bar').attr('value', parseInt(json['indexing_status']));
+                                    };
+                                    if (parseInt(json['indexing_status']) >= 100) {
+                                        clearInterval(intervalID);
+                                        $.ajax({
+                                             url : "get_data_from_" + index_name + "_between_0_and_200",
+                                             type : "POST",
+                                             data : data,
+                                             processData: false,
+                                             contentType: false,
+                                             success : function(json){
+                                                    $.each(json['response_es_data'], function(key_in_json_table, row_in_json_table){
+                                                        var row = $("<tr />");
+                                                        $("#table-content").append(row);
+                                                        $.each(row_in_json_table, function(key_in_json_row, cell_in_json_table){
+                                                            row.append($("<td>" + cell_in_json_table + "</td>"));
+                                                        });
+                                                    })
+                                                 },
+                                             error : function() {
+                                                 console.log("error")
+                                             }
+                                         })
+                                    }
+                                },
+                            error : function() {
+                                console.log("error")
+                            }
+                        });
+                    },
                     300);
-
-                $.each(json['response_es_data']['data'], function(key_in_json_table, row_in_json_table){
-                    var row = $("<tr />");
-                    $("#table-content").append(row);
-                    $.each(row_in_json_table, function(key_in_json_row, cell_in_json_table){
-                        row.append($("<td>" + cell_in_json_table + "</td>"));
-                    });
-                })
-
             },
             error : function(xhr,errmsg,err) {
                 console.log("error")

@@ -55,6 +55,53 @@ def task_status(request, task_id):
         json_response['indexing_status'] = -1
     return JsonResponse(json_response)
 
+def get_data(request, index_name, row_from, row_to):
+    json_response = {}
+    es = Elasticsearch()
+
+    query_count_columns = \
+        {
+            "size": 0,
+            "aggs": {
+                "columns_count": {
+                    "filter": {"term": {"row": 0}},
+                    "aggs": {
+                        "count": {"value_count": {"field": "col"}}
+                    }
+                }
+            }
+        }
+    es_search_result = es.search(index = index_name,
+                                 doc_type = index_name,
+                                 body = query_count_columns)
+    columns_count = int(es_search_result['aggregations']['columns_count']['doc_count'])
+    query_size = (int(row_to) - int(row_from)) * columns_count
+    query_select_top_N = \
+                    {
+                        "size": str(query_size),
+                        "query": {
+                            "range": {
+                                "row": {
+                                    "lt": row_to,
+                                    "gte": row_from
+                                }
+                            }
+                        }
+                    }
+
+    es_search_result = es.search(
+                                index = index_name,
+                                doc_type = index_name,
+                                body = query_select_top_N,
+                                filter_path = ['hits.hits._source'])
+    df = pd.DataFrame()
+
+    for item in es_search_result['hits']['hits']:
+        df.loc[item['_source']['row'], item['_source']['col']] = item['_source']['orig_value']
+
+    json_response['response_es_data'] = df.sort_index(axis = 0).sort_index(axis = 1).values.tolist()
+    return JsonResponse(json_response)
+
 
 class main(TemplateView):
     template_name = 'main.html'
@@ -93,6 +140,7 @@ class main(TemplateView):
                                                            delimeter = delimeter)
 
             self.json_response['task_id'] = put_file_into_es.task_id
+            self.json_response['index_name'] = file_name
 
             user_file.upload_into_es_task_id = put_file_into_es.task_id
             user_file.save()
@@ -143,46 +191,7 @@ def put_data_in_es(i_name, d_type, file_path):
     es.indices.put_mapping(index = i_name, doc_type = i_name, body = mapping)
     upload_file_into_es(file_path = file_path, index_name = i_name)
 
-def retrieve_es_data(index_name):
-    es = Elasticsearch()
 
-    query_count_columns = \
-        {
-            "size": 0,
-            "aggs": {
-                "columns_count": {
-                    "filter": {"term": {"row": 0}},
-                    "aggs": {
-                        "count": {"value_count": {"field": "col"}}
-                    }
-                }
-            }
-        }
-    es_search_result = es.search(index = index_name,
-                                 doc_type = index_name, body = query_count_columns)
-    columns_count = int(es_search_result['aggregations']['columns_count']['doc_count'])
-    rows_to_select = 100
-    query_size = rows_to_select * columns_count
-    query_select_top_N = \
-                    {
-                        "size": str(query_size),
-                        "query": {
-                            "range": {
-                                "row": {"lt": str(rows_to_select)}
-                            }
-                        }
-                    }
-
-    es_search_result = es.search(
-                                index = index_name,
-                                doc_type = index_name,
-                                body = query_select_top_N,
-                                filter_path = ['hits.hits._source'])
-    df = pd.DataFrame()
-
-    for item in es_search_result['hits']['hits']:
-        df.loc[item['_source']['row'], item['_source']['col']] = item['_source']['orig_value']
-    return df.sort_index(axis = 0).sort_index(axis = 1).values.tolist()
 
 
 
