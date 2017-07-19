@@ -56,7 +56,7 @@ $(function() {
                                 contentType: false,
                                 success : function(json){
                                         console.log(json['indexing_status'])
-                                        if (parseInt(json['indexing_status']) >= 0) {
+                                        if (parseInt(json['indexing_status']) >= 0 && $('#indexing-progress-bar').attr('value') < parseInt(json['indexing_status'])) {
                                             $('#indexing-progress-bar').attr('value', parseInt(json['indexing_status']));
                                         };
                                         if (parseInt(json['indexing_status']) >= 100) {

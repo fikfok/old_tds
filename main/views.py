@@ -50,10 +50,9 @@ def task_status(request, task_id):
     try:
         rows_count = count_docs['aggregations']['aggs']['hits']['hits'][0]['_source']['row'] + 1
         cols_count = count_docs['aggregations']['aggs']['hits']['hits'][0]['_source']['col'] + 1
-        json_response['indexing_status'] = (rows_count * cols_count) / (current_file.upload_into_es_rows_count * current_file.upload_into_es_cols_count) * 100
+        json_response['indexing_status'] = ((rows_count - 1) * current_file.upload_into_es_cols_count + cols_count) / (current_file.upload_into_es_rows_count * current_file.upload_into_es_cols_count) * 100
     except IndexError:
         json_response['indexing_status'] = -1
-    print(rows_count , cols_count)
     return JsonResponse(json_response)
 
 
