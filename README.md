@@ -23,3 +23,4 @@ Celery (http://www.lexev.org/2014/django-celery-setup/):
 
 Run celery and worker:
 - python manage.py celery worker -B --concurrency=1
+
