@@ -1,25 +1,21 @@
-.query-builder .rules-list > *::after,
-.query-builder .rules-list > *::before {
+.col-sm-4 .query-builder .rules-list > *::after,
+.col-sm-4 .query-builder .rules-list > *::before {
     border-style: none;
 }
 
-.query-builder .rules-list {
-    padding-left: 0px;
-}
-
-.query-builder .rule-container .rule-value-container {
+.col-sm-4 .query-builder .rule-container .rule-value-container {
     border-left: none;
 }
 
-.rules-group-body {
+.col-sm-4 .query-builder .rules-list {
+    padding-left: 0px;
+}
+
+.col-sm-4 .rules-group-body {
     margin-top: 30px;
 }
 
 #tab2default .panel-body,
 #tab3default .panel-body {
     padding: 0px;
-}
-
-.col-sm-6 {
-    float: right;
 }
