@@ -1,0 +1,25 @@
+.query-builder .rules-list > *::after,
+.query-builder .rules-list > *::before {
+    border-style: none;
+}
+
+.query-builder .rules-list {
+    padding-left: 0px;
+}
+
+.query-builder .rule-container .rule-value-container {
+    border-left: none;
+}
+
+.rules-group-body {
+    margin-top: 30px;
+}
+
+#tab2default .panel-body,
+#tab3default .panel-body {
+    padding: 0px;
+}
+
+.col-sm-6 {
+    float: right;
+}
