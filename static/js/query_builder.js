@@ -11,32 +11,33 @@ var myFilters = [
     id: 'description',
     label: 'Description',
     type: 'string'
-}];
+}
+];
 
-$('#builder-output-columns').queryBuilder({
-    plugins: ['bt-tooltip-errors'],
-    allow_groups: false,
-    conditions: ['AND'],
-    operators: [{ type: 'display_as', optgroup: 'custom', nb_inputs: 1, multiple: false, apply_to: ['string']}],
-    lang: {
-            operators: {
-                display_as: 'display as',
-            }
-        },
-
-    filters: myFilters,
-
-    rules: {
-              condition: 'AND',
-              rules: [
-                  {
-                    id: 'name',
-                    operator: 'display_as',
-                    value: ''
-                  }
-                ]
-            }
-});
+// $('#builder-output-columns').queryBuilder({
+//     plugins: ['bt-tooltip-errors'],
+//     allow_groups: false,
+//     conditions: ['AND'],
+//     operators: [{ type: 'display_as', optgroup: 'custom', nb_inputs: 1, multiple: false, apply_to: ['string']}],
+//     lang: {
+//             operators: {
+//                 display_as: 'display as',
+//             }
+//         },
+//
+//     filters: myFilters/*,
+//
+//     rules: {
+//               condition: 'AND',
+//               rules: [
+//                   {
+//                     id: 'name',
+//                     operator: 'display_as',
+//                     value: ''
+//                   }
+//                 ]
+//             }*/
+// });
 
 $('#btn-reset').on('click', function() {
     $('#builder-output-columns').queryBuilder('reset');
@@ -84,13 +85,15 @@ function format4popup(object) {
     return JSON.stringify(object, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-$('.group-conditions').hide();
+// $('.group-conditions').hide();
+//
+// var bt = $('#builder-output-columns button[data-add = "rule"]');
+// bt.html(bt.html().replace('Add rule', 'Add column'));
 
-var bt = $('#builder-output-columns button[data-add = "rule"]');
-bt.html(bt.html().replace('Add rule', 'Add column'));
 
 
 // --------------------------------------------------------------------------------------------------
+
 
 var myFilters = [
 {

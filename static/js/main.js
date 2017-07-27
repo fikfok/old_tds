@@ -59,13 +59,35 @@ $(function() {
                                              processData: false,
                                              contentType: false,
                                              success : function(json){
-                                                    $.each(json['response_es_data'], function(key_in_json_table, row_in_json_table){
+                                                    var columns_list = []
+                                                    $.each(json['response_es_data'], function(row_num, row_in_json_table){
+                                                        if(row_num == 0){
+                                                            for(i = 0; i < row_in_json_table.length; i++){
+                                                                columns_list.push({id: 'col_num_' + i.toString(), label: 'Col #' + (i + 1).toString(), type: 'string'});
+                                                            };
+                                                        };
+
                                                         var row = $("<tr />");
                                                         $("#table-content").append(row);
-                                                        $.each(row_in_json_table, function(key_in_json_row, cell_in_json_table){
+                                                        $.each(row_in_json_table, function(col_num, cell_in_json_table){
                                                             row.append($("<td>" + cell_in_json_table + "</td>"));
                                                         });
-                                                    })
+                                                    });
+
+                                                    $('#builder-output-columns').queryBuilder({
+                                                        plugins: ['bt-tooltip-errors'],
+                                                        allow_groups: false,
+                                                        conditions: ['AND'],
+                                                        operators: [{ type: 'display_as', optgroup: 'custom', nb_inputs: 1, multiple: false, apply_to: ['string']}],
+                                                        lang: {operators: {display_as: 'display as'}},
+                                                        filters: columns_list
+                                                    });
+
+                                                    $('.column-builder-container .group-conditions').hide();
+
+                                                    var bt = $('#builder-output-columns button[data-add = "rule"]');
+                                                    bt.html(bt.html().replace('Add rule', 'Add column'));
+
                                                  },
                                              error : function() {
                                                  console.log("error")
@@ -87,4 +109,10 @@ $(function() {
 
         $("#files-list").val('');
     });
+});
+
+$('.nav-tabs li').on('click', function() {
+    if ($(this).html().indexOf('Filters') > 0 && !($(this).hasClass('active'))) {
+        alert('First push');
+    }
 });

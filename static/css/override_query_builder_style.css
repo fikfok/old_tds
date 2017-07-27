@@ -1,17 +1,17 @@
-.col-sm-4 .query-builder .rules-list > *::after,
-.col-sm-4 .query-builder .rules-list > *::before {
+.column-builder-container .query-builder .rules-list > *::after,
+.column-builder-container .query-builder .rules-list > *::before {
     border-style: none;
 }
 
-.col-sm-4 .query-builder .rule-container .rule-value-container {
+.column-builder-container .query-builder .rule-container .rule-value-container {
     border-left: none;
 }
 
-.col-sm-4 .query-builder .rules-list {
+.column-builder-container .query-builder .rules-list {
     padding-left: 0px;
 }
 
-.col-sm-4 .rules-group-body {
+.column-builder-container .rules-group-body {
     margin-top: 30px;
 }
 
