@@ -1,3 +1,5 @@
+var filters = []
+
 $(function() {
     $('#files-list').on('change', function () {
         $('#files-list-table-body').append('<tr><td>' + $("#files-list")[0].files[0].name + '</td><td>' + $("#files-list")[0].files[0].size + '</td><td><progress id="upload-progress-bar" max="100" value="0" style="width: 70px;"></progress></td><td><progress id="indexing-progress-bar" max="100" value="0" style="width: 70px;"></progress></td></tr>');
@@ -113,6 +115,47 @@ $(function() {
 
 $('.nav-tabs li').on('click', function() {
     if ($(this).html().indexOf('Filters') > 0 && !($(this).hasClass('active'))) {
-        alert('First push');
+        // alert('First push');
     }
 });
+
+
+$('button.TEST').on('click', function() {
+    var result = convert2json($('#builder-output-columns').queryBuilder('getRules'));
+
+    // if (!$.isEmptyObject(result)) {
+    //     console.log(result['rules']);
+    // }
+
+    $.each(result['rules'], function(key, item){
+        console.log(item);
+        filters.push({id: item['id'], label: item['value'], type: item['type']})
+    });
+
+    console.log(filters);
+
+    
+
+    $('#builder-data-filter').queryBuilder({
+        plugins: ['bt-tooltip-errors'],
+            operators: $.fn.queryBuilder.constructor.DEFAULTS.operators.concat([
+                { type: 'contains_one', nb_inputs: 1, multiple: false, apply_to: ['string'] },
+                { type: 'contains_near', nb_inputs: 2, multiple: false, apply_to: ['string'] },
+                { type: 'regex', nb_inputs: 1, multiple: false, apply_to: ['string'] }
+            ]),
+        lang: {
+                operators: {
+                    contains_one: 'contains any',
+                    contains_near: 'contains by distance',
+                    regex: 'regular expressions'
+                }
+            },
+        filters: filters
+    });
+
+});
+
+
+function convert2json(object) {
+    return JSON.parse(JSON.stringify(object, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;'))
+}

@@ -112,36 +112,36 @@ var myFilters = [
     type: 'string'
 }];
 
-$('#builder-data-filter').queryBuilder({
-    plugins: ['bt-tooltip-errors'],
-
-        operators: $.fn.queryBuilder.constructor.DEFAULTS.operators.concat([
-            { type: 'contains_one',  nb_inputs: 1, multiple: false, apply_to: ['string'] },
-            { type: 'contains_near',	nb_inputs: 2, multiple: false, apply_to: ['string'] },
-            { type: 'regex',	nb_inputs: 1, multiple: false, apply_to: ['string'] }
-        ]),
-
-    lang: {
-            operators: {
-                contains_one: 'contains any',
-                contains_near: 'contains by distance',
-                regex: 'regular expressions'
-            }
-        },
-
-    filters: myFilters,
-
-    rules: {
-              condition: 'AND',
-              rules: [
-                  {
-                    id: 'name',
-                    operator: 'contains_near',
-                    value: ['Hello World','5']
-                  }
-                ]
-            }
-});
+// $('#builder-data-filter').queryBuilder({
+//     plugins: ['bt-tooltip-errors'],
+//
+//         operators: $.fn.queryBuilder.constructor.DEFAULTS.operators.concat([
+//             { type: 'contains_one',  nb_inputs: 1, multiple: false, apply_to: ['string'] },
+//             { type: 'contains_near',	nb_inputs: 2, multiple: false, apply_to: ['string'] },
+//             { type: 'regex',	nb_inputs: 1, multiple: false, apply_to: ['string'] }
+//         ]),
+//
+//     lang: {
+//             operators: {
+//                 contains_one: 'contains any',
+//                 contains_near: 'contains by distance',
+//                 regex: 'regular expressions'
+//             }
+//         },
+//
+//     filters: myFilters,
+//
+//     rules: {
+//               condition: 'AND',
+//               rules: [
+//                   {
+//                     id: 'name',
+//                     operator: 'contains_near',
+//                     value: ['Hello World','5']
+//                   }
+//                 ]
+//             }
+// });
 
 $('.reset-data-filter').on('click', function() {
     $('#builder-data-filter').queryBuilder('reset');
