@@ -11,6 +11,23 @@ from django.http import JsonResponse
 import pandas as pd
 import main.tasks as tasks
 from celery.result import AsyncResult
+import json
+import re
+
+def get_filters(request):
+    if request.POST:
+        raw_output_columns = json.loads(request.POST['output_columns'])
+        raw_filters = json.loads(request.POST['filters'])
+        output_columns = [{'col': int(item['id'].replace('col_num_', '')), 'alias': item['value']} for item in raw_output_columns['rules']]
+        # filters = [{'col': re.search('col_num_(\d{1,})', item['id']).group(1), 'operator': item['operator'], 'val': item['value']} for item in raw_filters['rules']]
+        print(raw_filters)
+        print(str(raw_filters).replace("'", '"').replace('term', 'match'))
+        # print(filters)
+
+    json_response = {}
+    json_response['status'] = 'ok'
+    return JsonResponse(json_response)
+
 
 def task_status(request, task_id):
     json_response = {}

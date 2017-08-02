@@ -87,6 +87,9 @@ $(function() {
 
                                                     $('.column-builder-container .group-conditions').hide();
 
+                                                    $('.btn-group.group-actions').removeClass('pull-right');
+                                                    $('.btn-group.group-actions').addClass('pull-left');
+
                                                     var bt = $('#builder-output-columns button[data-add = "rule"]');
                                                     bt.html(bt.html().replace('Add rule', 'Add column'));
 
@@ -115,47 +118,97 @@ $(function() {
 
 $('.nav-tabs li').on('click', function() {
     if ($(this).html().indexOf('Filters') > 0 && !($(this).hasClass('active'))) {
-        // alert('First push');
     }
 });
 
 
-$('button.TEST').on('click', function() {
+$('button.refresh-filters').on('click', function() {
     var result = convert2json($('#builder-output-columns').queryBuilder('getRules'));
 
-    // if (!$.isEmptyObject(result)) {
-    //     console.log(result['rules']);
-    // }
+    if (!$.isEmptyObject(result)) {
+        var i = 0;
+        $.each(result['rules'], function(key, item){
+            filters.push({id: item['id'] + '_filter_num_' + i.toString(), label: item['value'], type: item['type']})
+            i += 1;
+        });
 
-    $.each(result['rules'], function(key, item){
-        console.log(item);
-        filters.push({id: item['id'], label: item['value'], type: item['type']})
-    });
+        if($('#builder-data-filter').children().length == 0) {
+            $('#builder-data-filter').queryBuilder({
+                plugins: ['bt-tooltip-errors'],
+                operators: $.fn.queryBuilder.constructor.DEFAULTS.operators.concat([
+                    // {type: 'contains_one', nb_inputs: 1, multiple: false, apply_to: ['string']},
+                    {type: 'regex', nb_inputs: 1, multiple: false, apply_to: ['string']}
+                ]),
+                lang: {
+                    operators: {
+                        // contains_one: 'contains any',
+                        regex: 'regular expressions'
+                    }
+                },
+                filters: filters
+            });
+        }
+        else{
+            $('#builder-data-filter').queryBuilder('destroy');
+            var result = convert2json($('#builder-output-columns').queryBuilder('getRules'));
 
-    console.log(filters);
+            while(filters.length){filters.pop()};
 
-    
+            $.each(result['rules'], function(key, item){
+                filters.push({id: item['id'] + '_filter_num_' + i.toString(), label: item['value'], type: item['type']})
+            });
 
-    $('#builder-data-filter').queryBuilder({
-        plugins: ['bt-tooltip-errors'],
-            operators: $.fn.queryBuilder.constructor.DEFAULTS.operators.concat([
-                { type: 'contains_one', nb_inputs: 1, multiple: false, apply_to: ['string'] },
-                { type: 'contains_near', nb_inputs: 2, multiple: false, apply_to: ['string'] },
-                { type: 'regex', nb_inputs: 1, multiple: false, apply_to: ['string'] }
-            ]),
-        lang: {
-                operators: {
-                    contains_one: 'contains any',
-                    contains_near: 'contains by distance',
-                    regex: 'regular expressions'
-                }
-            },
-        filters: filters
-    });
-
+            $('#builder-data-filter').queryBuilder({
+                plugins: ['bt-tooltip-errors'],
+                operators: $.fn.queryBuilder.constructor.DEFAULTS.operators.concat([
+                    // {type: 'contains_one', nb_inputs: 1, multiple: false, apply_to: ['string']},
+                    {type: 'regex', nb_inputs: 1, multiple: false, apply_to: ['string']}
+                ]),
+                lang: {
+                    operators: {
+                        // contains_one: 'contains any',
+                        regex: 'regular expressions'
+                    }
+                },
+                filters: filters
+            });
+        };
+    }
 });
+
+$('button.retrieve-data').on('click', function() {
+    var output_columns = convert2json($('#builder-output-columns').queryBuilder('getRules'));
+    var filters = convert2json($('#builder-data-filter').queryBuilder('getRules'));
+
+    if (!$.isEmptyObject(output_columns) && !$.isEmptyObject(filters)) {
+
+        var esQuery = $('#builder-data-filter').queryBuilder('getESBool');
+
+        var data = new FormData();
+        data.append('output_columns', JSON.stringify(output_columns));
+        data.append('filters', JSON.stringify(/*filters*/esQuery));
+        data.append('csrfmiddlewaretoken', $('input[name="csrfmiddlewaretoken"]').val());
+
+        $.ajax({
+             url : "get_filters",
+             type : "POST",
+             data : data,
+             processData: false,
+             contentType: false,
+             success : function(json){
+                 console.log("success")
+                 },
+             error : function() {
+                 console.log("error")
+             }
+         })
+
+    }
+});
+
 
 
 function convert2json(object) {
     return JSON.parse(JSON.stringify(object, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;'))
 }
+
