@@ -23,5 +23,6 @@ Tools for periodic tasks:
 - pip install django-celery
 
 Run celery and worker:
+
 - python manage.py celery worker -B --concurrency=1
 
