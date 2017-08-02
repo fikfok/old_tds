@@ -10,6 +10,7 @@
 Tools for periodic tasks:
 
 [RabbitMQ](http://www.deenter.com/2016/01/25/how-to-install-celery-on-django-and-create-a-periodic-task/)
+
 - sudo apt-get install rabbitmq
 - sudo rabbitmq-server -detached
 - sudo rabbitmqctl add_user admin admin
