@@ -15,7 +15,7 @@ Tools for periodic tasks:
 - sudo rabbitmq-server -detached
 - sudo rabbitmqctl add_user admin admin
 
-                            ^login ^password
+                            login password
 - sudo rabbitmqctl add_host myvhost
 - sudo rabbitmqctl set_permissions -p myvhost admin ".*" ".*" ".*"
 
@@ -23,7 +23,7 @@ Tools for periodic tasks:
 
 - pip install celery==3.1.25
 
-                      ^strongly (problem with 4.0: https://stackoverflow.com/questions/40540769/importerror-no-module-named-timeutils)
+                      ^strongly ([problem with 4.0](https://stackoverflow.com/questions/40540769/importerror-no-module-named-timeutils))
 - pip install django-celery
 
 Run celery and worker:
