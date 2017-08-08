@@ -17,22 +17,29 @@ def just_print():
 
 @task
 def put_data_in_es(index_name, file_path, read_chunk_size, parallel_jobs_count, index_chunk_size, delimeter):
+    current_file = UploadedFiles.objects.get(pk = index_name)
+
     time_creation = time.time()
     wait_time = 4
     es = Elasticsearch()
-    mapping = \
-        {
-            "properties": {
-                "row": {"type": "long"},
-                "col": {"type": "long"},
-                "orig_value": {"type": "text", "fields": {"raw_value": {"type": "keyword"}}}
-            }
-        }
+
+    columns = {'col_' + str(item): {"type": "string", "index": "not_analyzed"} for item in range(current_file.upload_into_es_cols_count)}
+    columns['row_num'] = {"type": "long"}
+
+    mapping = {'properties':
+                    {
+                    'col_' + str(item): {'type': 'string', 'index': 'not_analyzed'} for item in range(current_file.upload_into_es_cols_count)
+                    }
+                }
+
+    mapping['properties']['row_num'] = {'type': 'long'}
+
     es.indices.create(index = index_name)
     es.indices.put_mapping(index = index_name, doc_type = index_name, body = mapping)
 
     t0 = time.time()
     while not es.indices.exists_type(index = index_name, doc_type = index_name) and time.time() - t0 < wait_time:
+        time.sleep(0.01)
         pass
 
     time_indexing = time.time()
@@ -44,7 +51,7 @@ def put_data_in_es(index_name, file_path, read_chunk_size, parallel_jobs_count, 
                         delimeter = delimeter)
     stop_time = time.time()
 
-    current_file = UploadedFiles.objects.get(pk = index_name)
+
     current_file.upload_into_es_settings_rcs = read_chunk_size
     current_file.upload_into_es_settings_pp = parallel_jobs_count
     current_file.upload_into_es_settings_ics = index_chunk_size

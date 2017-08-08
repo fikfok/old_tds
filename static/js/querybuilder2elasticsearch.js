@@ -90,8 +90,6 @@
                     }
 
                     function make_query(rule) {
-                        // console.log(rule.operator);
-
                         var mdb = that.settings.ESBoolOperators[rule.operator],
                         ope = that.getOperatorByType(rule.operator),
                         part = {};

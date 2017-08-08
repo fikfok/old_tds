@@ -65,7 +65,7 @@ $(function() {
                                                     $.each(json['response_es_data'], function(row_num, row_in_json_table){
                                                         if(row_num == 0){
                                                             for(i = 0; i < row_in_json_table.length; i++){
-                                                                columns_list.push({id: 'col_num_' + i.toString(), label: 'Col #' + (i + 1).toString(), type: 'string'});
+                                                                columns_list.push({id: 'col_' + i.toString(), label: 'Col #' + (i + 1).toString(), type: 'string'});
                                                             };
                                                         };
 

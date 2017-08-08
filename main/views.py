@@ -3,7 +3,6 @@ from main.forms import DocumentForm
 import os
 from django.conf import settings
 from elasticsearch import Elasticsearch
-from main.upload_file_into_es import upload_file_into_es
 from main.models import UploadedFiles
 from datetime import datetime
 from django.utils.timezone import now as django_now
@@ -20,9 +19,12 @@ def get_filters(request):
         raw_filters = json.loads(request.POST['filters'])
         output_columns = [{'col': int(item['id'].replace('col_num_', '')), 'alias': item['value']} for item in raw_output_columns['rules']]
         # filters = [{'col': re.search('col_num_(\d{1,})', item['id']).group(1), 'operator': item['operator'], 'val': item['value']} for item in raw_filters['rules']]
-        print(raw_filters)
-        print(str(raw_filters).replace("'", '"').replace('term', 'match'))
-        # print(filters)
+        print(raw_output_columns)
+        query = str(raw_filters).replace("'", '"')
+        for remove_substr in re.findall(r'_filter_num_\d+', query):
+            print(remove_substr)
+            query.replace(remove_substr, '')
+        print(query)
 
     json_response = {}
     json_response['status'] = 'ok'
@@ -39,24 +41,7 @@ def task_status(request, task_id):
         {
             "size": 0,
             "aggs": {
-                "aggs": {
-                    "top_hits": {
-                        "size": 1,
-                        "_source": {
-                            "includes": ["col", "row"]
-                        },
-                        "sort": [
-                            {
-                                "row": {
-                                    "order": "desc"
-                                },
-                                "col": {
-                                    "order": "desc"
-                                }
-                            }
-                        ]
-                    }
-                }
+                "max_row_num": {"max": {"field": "row_num"}}
             }
         }
 
@@ -65,10 +50,9 @@ def task_status(request, task_id):
                            doc_type = current_file.unique_file_name,
                            body = query_search)
     try:
-        rows_count = count_docs['aggregations']['aggs']['hits']['hits'][0]['_source']['row'] + 1
-        cols_count = count_docs['aggregations']['aggs']['hits']['hits'][0]['_source']['col'] + 1
-        json_response['indexing_status'] = ((rows_count - 1) * current_file.upload_into_es_cols_count + cols_count) / (current_file.upload_into_es_rows_count * current_file.upload_into_es_cols_count) * 100
-    except IndexError:
+        rows_count = count_docs['aggregations']['max_row_num']['value'] + 1
+        json_response['indexing_status'] = rows_count / current_file.upload_into_es_rows_count * 100
+    except:
         json_response['indexing_status'] = -1
     return JsonResponse(json_response)
 
@@ -76,34 +60,23 @@ def get_data(request, index_name, row_from, row_to):
     json_response = {}
     es = Elasticsearch()
 
-    query_count_columns = \
-        {
-            "size": 0,
-            "aggs": {
-                "columns_count": {
-                    "filter": {"term": {"row": 0}},
-                    "aggs": {
-                        "count": {"value_count": {"field": "col"}}
-                    }
-                }
-            }
-        }
-    es_search_result = es.search(index = index_name,
-                                 doc_type = index_name,
-                                 body = query_count_columns)
-    columns_count = int(es_search_result['aggregations']['columns_count']['doc_count'])
-    query_size = (int(row_to) - int(row_from)) * columns_count
     query_select_top_N = \
                     {
-                        "size": str(query_size),
                         "query": {
                             "range": {
-                                "row": {
-                                    "lt": row_to,
-                                    "gte": row_from
+                                "row_num": {
+                                    "gte": row_from,
+                                    "lte": row_to
                                 }
                             }
-                        }
+                        },
+                        "sort": [
+                            {
+                              "row_num": {
+                                "order": "asc"
+                              }
+                            }
+                        ]
                     }
 
     es_search_result = es.search(
@@ -111,12 +84,16 @@ def get_data(request, index_name, row_from, row_to):
                                 doc_type = index_name,
                                 body = query_select_top_N,
                                 filter_path = ['hits.hits._source'])
-    df = pd.DataFrame()
+    columns_list = list(set(es_search_result['hits']['hits'][0]['_source'].keys()) - set(['row_num']))
+    columns_list.sort(key = lambda x: int(str(x).replace('col_', '')))
+
+    df = pd.DataFrame(columns = columns_list)
 
     for item in es_search_result['hits']['hits']:
-        df.loc[item['_source']['row'], item['_source']['col']] = item['_source']['orig_value']
+        df.loc[item['_source']['row_num']] = dict({key: item['_source'][key] for key in columns_list})
 
-    json_response['response_es_data'] = df.sort_index(axis = 0).sort_index(axis = 1).values.tolist()
+    json_response['response_es_data'] = df.values.tolist()
+        # .sort_index(axis = 0).sort_index(axis = 1).values.tolist()
     return JsonResponse(json_response)
 
 
@@ -183,8 +160,6 @@ def uploaded_file(f, new_file_name, delimeter):
         for line in fl:
             res_list.append(line)
 
-    # put_data_in_es(i_name = new_file_name, d_type = new_file_name, file_path = absolut_path)
-
     num_rows = 0
     num_cols = 0
     if ext[1:] == 'csv':
@@ -193,22 +168,3 @@ def uploaded_file(f, new_file_name, delimeter):
             num_rows = sum(1 for line in fl) + 1
 
     return absolut_path, num_rows, num_cols
-
-def put_data_in_es(i_name, d_type, file_path):
-    es = Elasticsearch()
-    mapping = \
-        {
-            "properties": {
-                "row": {"type": "long"},
-                "col": {"type": "long"},
-                "orig_value": {"type": "text", "fields": {"raw_value": {"type": "keyword"}}}
-            }
-        }
-    es.indices.create(index = i_name)
-    es.indices.put_mapping(index = i_name, doc_type = i_name, body = mapping)
-    upload_file_into_es(file_path = file_path, index_name = i_name)
-
-
-
-
-

@@ -22,16 +22,16 @@ def documents_from_file(file_name, index_name, read_chunk_size, delimiter = '\t'
     def all_docs():
         reader = pd.read_table(file_name, header = None, iterator = True, chunksize = read_chunk_size, delimiter = delimiter)
         for i, df in enumerate(reader):
-            records = df.to_dict()
-            list_records = [records[item] for item in records]
-            for col_num, row in enumerate(list_records):
-                for row_num, cell in row.items():
-                    yield \
+            df.rename(columns={col: 'col_' + str(col) for col in df.columns}, inplace=True)
+            df['row_num'] = df.index
+
+            for row_num, row in enumerate(list(df.transpose().to_dict().values())):
+                yield \
                         (
                             {
                                 '_index': index_name,
                                 '_type': index_name,
-                                '_source': {'row': int(row_num), 'col': int(col_num), 'orig_value': str(cell)}
+                                '_source': row
                             }
                         )
     return all_docs
