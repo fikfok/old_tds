@@ -1,4 +1,7 @@
-var filters = []
+'use strict';
+
+var filters = [];
+var index_name = '';
 
 $(function() {
     $('#files-list').on('change', function () {
@@ -40,7 +43,7 @@ $(function() {
             contentType: false,
             success : function(json){
                 console.log("success");
-                var index_name = json['index_name'];
+                index_name = json['index_name'];
                 var intervalID = setInterval(function testFunc(){
                        $.ajax({
                             url : "task_status/" + json['task_id'],
@@ -64,7 +67,7 @@ $(function() {
                                                     var columns_list = []
                                                     $.each(json['response_es_data'], function(row_num, row_in_json_table){
                                                         if(row_num == 0){
-                                                            for(i = 0; i < row_in_json_table.length; i++){
+                                                            for(var i = 0; i < row_in_json_table.length; i++){
                                                                 columns_list.push({id: 'col_' + i.toString(), label: 'Col #' + (i + 1).toString(), type: 'string'});
                                                             };
                                                         };
@@ -186,17 +189,31 @@ $('button.retrieve-data').on('click', function() {
 
         var data = new FormData();
         data.append('output_columns', JSON.stringify(output_columns));
-        data.append('filters', JSON.stringify(/*filters*/esQuery));
+        data.append('filters', JSON.stringify(esQuery));
+        data.append('index_name', index_name);
         data.append('csrfmiddlewaretoken', $('input[name="csrfmiddlewaretoken"]').val());
 
         $.ajax({
-             url : "get_filters",
+             url : "retrieve_data_with_filter",
              type : "POST",
              data : data,
              processData: false,
              contentType: false,
              success : function(json){
-                 console.log("success")
+                    var columns_list = []
+                    $.each(json['response_es_data'], function(row_num, row_in_json_table){
+                        if(row_num == 0){
+                            for(var i = 0; i < row_in_json_table.length; i++){
+                                columns_list.push({id: 'col_' + i.toString(), label: 'Col #' + (i + 1).toString(), type: 'string'});
+                            };
+                        };
+
+                        var row = $("<tr />");
+                        $("#output-data-table-content").append(row);
+                        $.each(row_in_json_table, function(col_num, cell_in_json_table){
+                            row.append($("<td>" + cell_in_json_table + "</td>"));
+                        });
+                    });
                  },
              error : function() {
                  console.log("error")

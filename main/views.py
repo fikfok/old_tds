@@ -13,21 +13,39 @@ from celery.result import AsyncResult
 import json
 import re
 
-def get_filters(request):
+def retrieve_data_with_filter(request):
     if request.POST:
         raw_output_columns = json.loads(request.POST['output_columns'])
-        raw_filters = json.loads(request.POST['filters'])
-        output_columns = [{'col': int(item['id'].replace('col_num_', '')), 'alias': item['value']} for item in raw_output_columns['rules']]
-        # filters = [{'col': re.search('col_num_(\d{1,})', item['id']).group(1), 'operator': item['operator'], 'val': item['value']} for item in raw_filters['rules']]
-        print(raw_output_columns)
+        raw_filters = request.POST['filters']
         query = str(raw_filters).replace("'", '"')
         for remove_substr in re.findall(r'_filter_num_\d+', query):
-            print(remove_substr)
-            query.replace(remove_substr, '')
-        print(query)
+            query = query.replace(remove_substr, '')
+        query = {"query": json.loads(query)}
 
     json_response = {}
     json_response['status'] = 'ok'
+
+    json_response = {}
+    es = Elasticsearch()
+
+    es_search_result = es.search(
+                                index = request.POST['index_name'],
+                                doc_type = request.POST['index_name'],
+                                body = query,
+                                filter_path = ['hits.hits._source'])
+
+    print(query)
+
+    columns_list = list(set(es_search_result['hits']['hits'][0]['_source'].keys()) - set(['row_num']))
+    columns_list.sort(key = lambda x: int(str(x).replace('col_', '')))
+
+    df = pd.DataFrame(columns = columns_list)
+
+    for item in es_search_result['hits']['hits']:
+        df.loc[item['_source']['row_num']] = dict({key: item['_source'][key] for key in columns_list})
+
+    json_response['response_es_data'] = df.values.tolist()
+        # .sort_index(axis = 0).sort_index(axis = 1).values.tolist()
     return JsonResponse(json_response)
 
 
